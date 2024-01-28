@@ -3,6 +3,7 @@
 Std_Return Server::server_Init(int port_number){
     Std_Return R_value = Std_Return::STD_R_NOK;
     Server::socketDesc = socket(AF_INET, SOCK_STREAM,0);
+
     if(-1 == socketDesc)
     {
         std::cerr << "could not create socket\n";
@@ -14,7 +15,7 @@ Std_Return Server::server_Init(int port_number){
         Server::server.sin_addr.s_addr = INADDR_ANY;
         Server::server.sin_port = htons(port_number);
         
-        if(bind(socketDesc, reinterpret_cast<struct sockaddr *>(&server),sizeof(server))<0)
+        if(bind(socketDesc, reinterpret_cast<struct sockaddr *>(&server),sizeof(server)) < 0)
         {
             std::cerr << "bind failed\n";
             close(socketDesc);
@@ -28,9 +29,12 @@ Std_Return Server::server_Init(int port_number){
     return R_value;
 }
 
+
+
 Std_Return Server::server_Accept(){
     Std_Return R_value = Std_Return::STD_R_NOK;
     int c = sizeof(struct  sockaddr_in);
+    unsigned int count=0;
 
     //listen 
     if (listen(socketDesc, 3) < 0) 
@@ -53,8 +57,17 @@ Std_Return Server::server_Accept(){
         if(newSocket < 0)
         {
             std::cerr << "Accept failed\n";
-            R_value = Std_Return::STD_R_NOK;
-            continue;
+            count++;
+            if(count < 10)
+            {
+                continue;
+            }
+            else
+            {
+                close(socketDesc);
+                R_value = Std_Return::STD_R_NOK;
+                break;
+            }
         }
         else
         {
@@ -117,7 +130,6 @@ Std_Return Server::server_Recv_Command(){
             }
         }
     }
-    
     return R_value;
 }
 
